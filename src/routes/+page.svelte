@@ -2,14 +2,19 @@
 	import { Textarea } from '$components/ui/textarea';
 	import { Button } from '$components/ui/button';
 	import { Input } from '$components/ui/input';
-
-	import subreddits from '../subreddits.json';
+	import { fetchSubreddits } from '$lib/helpers/fetch-subreddits';
 
 	type Mapped = {
 		reddit: string;
 		lemmy: string;
 		official: boolean;
 	};
+
+	let subreddits: any = {};
+
+	$: {
+		fetchSubreddits().then((data) => (subreddits = data));
+	}
 
 	let mapped: Mapped[] = [];
 	let notFound: Pick<Mapped, 'reddit'>[] = [];
@@ -63,8 +68,8 @@
 
 	const getLemmyEquivalent = (subreddit: string) => {
 		const lemmyLink = subreddits.subs
-			.find((x) => x.name.replace('r/', '').toLowerCase() === subreddit.toLowerCase())
-			?.links.find((x) => x.service === 'lemmy');
+			.find((x: any) => x.name.replace('r/', '').toLowerCase() === subreddit.toLowerCase())
+			?.links.find((x: any) => x.service === 'lemmy');
 		return {
 			url: lemmyLink?.url || '',
 			official: lemmyLink?.official
