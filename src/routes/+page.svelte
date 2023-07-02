@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Textarea } from '$components/ui/textarea';
 	import { Button } from '$components/ui/button';
+	import { Input } from '$components/ui/input';
+
 	import subreddits from '../subreddits.json';
 
 	type Mapped = {
@@ -23,17 +25,24 @@
 
 	$: notFound = mapped.filter((x) => !x.lemmy).map((x) => ({ reddit: x.reddit }));
 
-	console.log({ found, notFound });
-
-	const handleSubmit = (subList: string) => {
+	const handleSubmit = (subList: string, instance: string) => {
 		const formattedSubList = subList.replace('https://www.reddit.com/r/', '').split('+');
 		mapped = formattedSubList
 			.map((sub) => {
 				const lemmyEquivalent = getLemmyEquivalent(sub);
+				if (!lemmyEquivalent.url) {
+					return {
+						reddit: sub,
+						lemmy: '',
+						official: false
+					};
+				}
+				const linkInstance = lemmyEquivalent.url.split('://')[1]?.split('/')[0];
+				const lemmySubname = lemmyEquivalent.url.split('/c/')[1];
 				return {
 					reddit: sub,
-					lemmy: lemmyEquivalent.url,
-					official: lemmyEquivalent.official
+					lemmy: `https://${instance}/c/${lemmySubname}@${linkInstance}`,
+					official: lemmyEquivalent.official ?? false
 				};
 			})
 			// sort so the ones without lemmy equivalent are at the end
@@ -68,11 +77,11 @@
 <form
 	on:submit={(e) => {
 		e.preventDefault();
-		handleSubmit(e.currentTarget.url.value);
+		handleSubmit(e.currentTarget.url.value, e.currentTarget.instance.value);
 	}}
 >
 	<div class="m-4">
-		<ol>To get the list :</ol>
+		<ol>To get your list of subscribed subreddits :</ol>
 		<li>
 			go to <a href="https://www.reddit.com/subreddits/" target="_blank"
 				>https://www.reddit.com/subreddits/</a
@@ -83,31 +92,42 @@
 	</div>
 
 	<label for="url">Paste the link here</label>
-	<Textarea name="url" id="url" cols="30" rows="10" class="m-4" />
+	<Textarea name="url" id="url" cols="30" rows="10" class="m-4" required />
+	<label for="instance">Lemmy instance url</label>
+	<Input
+		name="instance"
+		id="instance"
+		class="m-4"
+		placeholder="ex: lemmy.world, programming.dev, reddthat.com, ..."
+		required
+	/>
 	<div class="flex justify-end">
 		<Button type="submit">Generate</Button>
 	</div>
 
-	<h2 class="text-3xl m-2">Subs list</h2>
-	<h3 class="text-2xl m-4">Equivalent Found</h3>
-	<ul>
-		{#each found as f}
-			<li>
-				{f.reddit} : <a href={f.lemmy} target="_blank">{f.lemmy}</a>
-				{#if f.official}
-					<span class="text-green-500">Official</span>
-				{/if}
-			</li>
-		{/each}
-	</ul>
-	<h3 class="text-2xl m-4">Equivalent not found</h3>
-	<ul>
-		{#each notFound as f}
-			<li>
-				{f.reddit}
-			</li>
-		{/each}
-	</ul>
+	<!-- only display the rest if found or notFound -->
+	{#if found.length || notFound.length}
+		<h2 class="text-3xl m-2">Subs list</h2>
+		<h3 class="text-2xl my-4">Equivalent Found</h3>
+		<ul>
+			{#each found as f}
+				<li>
+					{f.reddit} : <a href={f.lemmy} target="_blank">{f.lemmy}</a>
+					{#if f.official}
+						<span class="text-green-500">Official</span>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+		<h3 class="text-2xl my-4">Equivalent not found</h3>
+		<ul>
+			{#each notFound as f}
+				<li>
+					{f.reddit}
+				</li>
+			{/each}
+		</ul>
+	{/if}
 </form>
 
 <style>
