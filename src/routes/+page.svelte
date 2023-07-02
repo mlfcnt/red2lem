@@ -93,7 +93,7 @@
 
 	<label for="url">Paste the link here</label>
 	<Textarea name="url" id="url" cols="30" rows="10" class="m-4" required />
-	<label for="instance">Lemmy instance url</label>
+	<label for="instance">Lemmy instance</label>
 	<Input
 		name="instance"
 		id="instance"
